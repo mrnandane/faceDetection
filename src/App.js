@@ -1,18 +1,43 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
+import Logo from './components/Logo/Logo'
 import './App.css';
+import Navigation from "./components/Navigation/Navigation";
+import Rank from "./components/Rank/Rank";
+import ImageLinkForm from './components/ImageLinkForm/ImageLinkForm';
+import 'tachyons';
+import Particles from 'react-particles-js';
+import ParticleOption from './JSON/particles';
+import FaceRecognition from './components/FaceRecognition/FaceRecognition';
+
+const ParticlesOptions = ParticleOption;
 
 class App extends Component {
+  constructor() {
+    super();
+
+    this.state = {
+      inputChanged: ''
+    }
+  }
+  onImageLinkChange(event) {
+    console.log('link..', event.target.value);
+  }
+
+  onImageLinkSubmit() {
+    console.log('submit clicked');
+  }
+
   render() {
     return (
       <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
-        </header>
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-        </p>
+        <Particles className="particles-bg" params={ParticlesOptions}/>
+        <Navigation />
+        <Logo/>
+        <Rank />
+        <ImageLinkForm className='w-80'
+                       onlinkChange={this.onImageLinkChange}
+                       onlinkSubmit={this.onImageLinkSubmit}/>
+        <FaceRecognition />
       </div>
     );
   }
