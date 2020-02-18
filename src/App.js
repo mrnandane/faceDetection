@@ -17,7 +17,7 @@ const ParticlesOptions = ParticleOption;
 const app = new Clarifai.App({
   // TODO: never commit api key.. for security purpose
   // ideally is should come from environment or should be encrypted somewhere
-  apiKey: '456'
+  apiKey: '609c69e065e443168cd60e7ca89bcb1e'
 });
 
 class App extends Component {
@@ -33,6 +33,11 @@ class App extends Component {
     }
   }
 
+  componentDidMount() {
+    fetch('http://localhost:3000/')
+    .then(res => res.json())
+    .then(console.log);
+  }
   calculateFaceLocation = (data) => {
     const clarifaiFace = data.outputs[0].data.regions[0].region_info.bounding_box;
     const width = Number(document.getElementById('faceImage').width);
