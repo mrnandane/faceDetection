@@ -8,29 +8,33 @@ import 'tachyons';
 import Particles from 'react-particles-js';
 import ParticleOption from './JSON/particles';
 import FaceRecognition from './components/FaceRecognition/FaceRecognition';
-import Clarifai from 'clarifai';
 import Signin from './components/Signin/Signin';
 import Register from './components/Register/Register';
 
 const ParticlesOptions = ParticleOption;
 
-const app = new Clarifai.App({
-  // TODO: never commit api key.. for security purpose
-  // ideally is should come from environment or should be encrypted somewhere
-  apiKey: '609c69e065e443168cd60e7ca89bcb1e'
-});
+
+
+const initialState = {
+  input: '',
+  imageUrl: '',
+  box: {},
+  route: 'signin',
+  isSignedIn: false,
+  user: {
+    id: '',
+    name: '',
+    email: '',
+    entries: 0,
+    joined: ''
+  }
+};
 
 class App extends Component {
   constructor() {
     super();
 
-    this.state = {
-      input: '',
-      imageUrl: '',
-      box: {},
-      route: 'signin',
-      isSignedIn: false
-    }
+    this.state = initialState;
   }
 
   componentDidMount() {
@@ -60,8 +64,30 @@ class App extends Component {
 
   onImageLinkSubmit = () => {
     this.setState({imageUrl: this.state.input});
-    app.models.predict(Clarifai.FACE_DETECT_MODEL, this.state.input)
-      .then(response => this.displayFaceBox(this.calculateFaceLocation(response)))
+    fetch('http://localhost:3000/imageUrl', {
+      method: 'post',
+      headers: { 'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        input: this.state.input
+      })
+    })
+    .then(response => response.json())
+      .then(response => {
+        this.displayFaceBox(this.calculateFaceLocation(response))
+
+        fetch('http://localhost:3000/image', {
+          method: 'put',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            id: this.state.user.id
+          })
+        })
+        .then(res => res.json())
+        .then(count => {
+            this.setState(Object.assign(this.state.user, {entries: count}));
+        })
+        .catch(err => console.log)
+      })
       .catch(err => console.error(err));
   };
 
@@ -69,13 +95,24 @@ class App extends Component {
     if(route === 'home') {
       this.setState({isSignedIn: true});
     } else {
-      this.setState({isSignedIn: false});
+      this.setState(initialState);
     }
     this.setState({route: route});
   };
 
+  setUserProfile = (data) => {
+    this.setState({
+      user: {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        entries: data.entries,
+        joined: data.joined
+      }
+    })
+  }
   render() {
-    const { imageUrl, box, route, isSignedIn } = this.state;
+    const { imageUrl, box, route, isSignedIn, user } = this.state;
     return (
       <div className="App">
         <Particles className="particles-bg" params={ParticlesOptions}/>
@@ -83,7 +120,7 @@ class App extends Component {
         { route === 'home' ?
           <div>
             <Logo/>
-            <Rank />
+            <Rank entries={user.entries} name={user.name}/>
             <ImageLinkForm className='w-80'
                            onlinkChange={this.onImageLinkChange}
                            onlinkSubmit={this.onImageLinkSubmit}/>
@@ -91,8 +128,8 @@ class App extends Component {
           </div> :
           (
             route === 'signin' ?
-              <Signin onRouteChanged={this.routeChanged}/> :
-              <Register onRouteChanged={this.routeChanged}/>
+              <Signin onRouteChanged={this.routeChanged} setUserProfile={this.setUserProfile}/> :
+              <Register onRouteChanged={this.routeChanged} setUserProfile={this.setUserProfile}/>
           )
         }
       </div>
